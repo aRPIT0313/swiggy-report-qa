@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Swiggy Report Q&A</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #ddd;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ccc;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      margin: 0;
+    }
+
+    .status {
+      font-size: 0.9rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 10px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .hero h2 {
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 0.95rem;
+      border: 1px solid #ccc;
+      resize: vertical;
+    }
+
+    button {
+      padding: 8px 15px;
+      margin-top: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    #resultsSection {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .result-card {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .chunk-card {
+      border-top: 1px solid #eee;
+      padding: 5px 0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .error-box {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Swiggy Report Q&A</h1>
+  <div class="status" id="statusText">{% if status == 'ready' %}Index Ready{% else %}Not Indexed{% endif %}</div>
+</header>
+
+<div class="container">
+
+  <div class="hero">
+    <h2>Ask questions about Swiggy's report</h2>
+    <p>All answers are sourced strictly from the official report.</p>
+  </div>
+
+      {% if status == 'not_indexed' %}
+  <div>
+    <p>Index not found. Run the following command in your terminal to build it:</p>
+    <pre style="background:#eee; padding:10px; border-radius:4px;">
+  python build_index.py --pdf "path/Annual-Report-FY-2023-24.pdf"
+    </pre>
+    <p>After the index is built, restart the app:</p>
+    <pre style="background:#eee; padding:10px; border-radius:4px;">
+  python app.py
+    </pre>
+    <p>Then open the page in your browser again.</p>
+  </div>
+  {% endif %}
+
+  <div>
+    <label>Question:</label>
+    <textarea id="questionInput" placeholder="Enter your question here" rows="3"></textarea>
+    <button id="askBtn" onclick="askQuestion()" {% if status != 'ready' %}disabled{% endif %}>Ask</button>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="loading" id="loadingDiv">Loading...</div>
+
+  <div id="resultsSection">
+    <div class="result-card">
+      <b>Answer:</b>
+      <div id="answerText"></div>
+    </div>
+    <div class="result-card">
+      <b>Context:</b>
+      <div id="chunksContainer"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  async function askQuestion() {
+    const q = document.getElementById('questionInput').value.trim();
+    if (!q) return;
+
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('loadingDiv').style.display = 'block';
+    document.getElementById('askBtn').disabled = true;
+
+    try {
+      const resp = await fetch('/api/query', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: q})
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        showError(data.error || 'Query failed');
+        return;
+      }
+
+      document.getElementById('answerText').textContent = data.answer;
+      const chunks = document.getElementById('chunksContainer');
+      chunks.innerHTML = '';
+      (data.retrieved_chunks || []).forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'chunk-card';
+        div.textContent = `${c.source}: ${c.text}`;
+        chunks.appendChild(div);
+      });
+
+      document.getElementById('resultsSection').style.display = 'block';
+
+    } catch(e) {
+      showError(e.message);
+    } finally {
+      document.getElementById('loadingDiv').style.display = 'none';
+      document.getElementById('askBtn').disabled = false;
+    }
+  }
+
+  function buildIndex() {
+    const path = document.getElementById('pdfPathInput').value.trim();
+    if (!path) return alert('Enter PDF path');
+
+    fetch('/api/index', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({pdf_path: path})
+    }).then(r => r.json())
+      .then(d => alert('Index built'))
+      .catch(e => alert('Error: ' + e.message));
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+</script>
+</body>
+</html>

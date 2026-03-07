@@ -1,0 +1,9 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Data files
+data/
+
+# Optional: ignore all pickle files
+*.pkl

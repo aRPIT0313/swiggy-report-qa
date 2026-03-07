@@ -1,0 +1,14 @@
+# PDF Processing
+pypdf>=5.0.0
+pdfplumber>=0.11.0
+
+# Vectorization & Math
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+
+# Web Application
+Flask>=3.0.0
+
+# API calls (Groq)
+requests>=2.31.0
