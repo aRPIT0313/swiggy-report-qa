@@ -167,4 +167,5 @@ swiggy_rag/
 * "Who are the board of directors of Swiggy?"
 * "What is Swiggy's market position in food delivery?"
 
-
+## Results
+![Output](https://raw.githubusercontent.com/aRPIT0313/images/main/rag/swiggy.png)
