@@ -18,23 +18,16 @@ This project is fully open-source, uses **TF-IDF + LSA** for retrieval, and does
 
 ## 🏗 Architecture
 
-PDF
- │
- ▼
-[Document Processor]   ← pypdf extraction + text cleaning + chunking
- │ chunks.json
- ▼
-[Vector Store]         ← TF-IDF vectorization (scikit-learn)
- │ vector_store.pkl     + Cosine similarity search
- ▼
-[RAG Engine]
- │
- ├─ retrieve top-K chunks (default k=5)
- │
- └─ [Groq API] ──► generated answers from retrieved chunks
-      OR
-      [Retrieval-only] ──► show top chunks if no API key
-
+```mermaid
+flowchart TD
+    A[PDF Source] -->|extract| B[Document Processor\npypdf · cleaning · chunking]
+    B -->|chunks.json| C[Vector Store\nTF-IDF · cosine similarity]
+    C -->|top-K chunks| D[RAG Engine\nretrieve · build prompt]
+    D -->|with API key| E[Groq API\nLLM-generated answer]
+    D -->|no API key| F[Retrieval-only mode\nreturns top chunks]
+    E --> G[Flask Web UI\nlocalhost:5000]
+    F --> G
+```
 
 ### Components
 
